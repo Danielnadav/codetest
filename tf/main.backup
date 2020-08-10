@@ -1,0 +1,44 @@
+provider "nutanix" {
+ username = "admin"
+ password = "Has0rd1m!@"
+ endpoint = "192.168.133.120"
+ insecure = true
+}
+
+data "nutanix_clusters" "clusters" {
+}
+
+locals {
+  cluster1 = data.nutanix_clusters.clusters.entities[1].metadata.uuid
+}
+
+resource "nutanix_image" "cirros-034-disk" {
+  name = "cirros-034-disk"
+
+  #source_uri  = "http://endor.dyn.nutanix.com/acro_images/DISKs/cirros-0.3.4-x86_64-disk.img"
+  source_uri  = "http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img"
+  description = "heres a tiny linux image, not an iso, but a real disk!"
+}
+
+
+resource "nutanix_virtual_machine" "demo-01-web" {
+  # General Information
+  name                 = "demo-01-web"
+  description          = "demo Frontend Web Server"
+  num_vcpus_per_socket = 2
+  num_sockets          = 1
+  memory_size_mib      = 4096
+
+  # What cluster will this VLAN live on?
+  cluster_uuid = "0005a661-2b3f-a7c8-7fe8-48df37c63c30"
+    disk_list {
+    # data_source_reference in the Nutanix API refers to where the source for
+    # the disk device will come from. Could be a clone of a different VM or a
+    # image like we're doing here
+    data_source_reference = {
+        kind = "image"
+        uuid = nutanix_image.cirros-034-disk.id
+      }
+
+
+  
